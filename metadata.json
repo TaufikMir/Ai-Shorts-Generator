@@ -1,0 +1,7 @@
+{
+  "name": "AI Shorts Factory",
+  "description": "Turn long videos into viral vertical Shorts, Reels, and TikToks with AI clip detection, caption styles, hooks, and SEO.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
