@@ -1,0 +1,21 @@
+{
+  "name": "ai-shorts-factory",
+  "version": "1.0.0",
+  "description": "Turn long videos into viral vertical Shorts, Reels, and TikToks with AI clip detection, caption styles, hooks, and SEO.",
+  "scripts": {
+    "dev": "npx serve public",
+    "build": "echo 'Static web assets ready for Vercel deployment' && exit 0",
+    "start": "npx serve public"
+  },
+  "keywords": [
+    "android",
+    "jetpack-compose",
+    "ai-video",
+    "shorts",
+    "gemini-api",
+    "tiktok",
+    "reels"
+  ],
+  "author": "AI Shorts Factory",
+  "license": "Apache-2.0"
+}

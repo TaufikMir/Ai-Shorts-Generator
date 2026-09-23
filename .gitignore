@@ -16,3 +16,10 @@
 local.properties
 .env
 debug.keystore
+
+# Vercel & Node
+.vercel
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

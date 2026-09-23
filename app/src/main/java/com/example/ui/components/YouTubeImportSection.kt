@@ -17,14 +17,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
@@ -57,6 +62,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -100,7 +107,7 @@ fun YouTubeImportSection(
         }
 
         if (!YouTubeImportHelper.isValidYouTubeUrl(trimmed)) {
-            errorMessage = "Please enter a valid YouTube video URL (e.g. youtube.com/watch?v=... or youtu.be/...)"
+            errorMessage = "Please enter a valid YouTube video URL (e.g. youtube.com/watch?v=..., shorts/..., live/..., or youtu.be/...)"
             resolvedDetails = null
             return
         }
@@ -114,6 +121,10 @@ fun YouTubeImportSection(
             result.onSuccess { details ->
                 resolvedDetails = details
                 errorMessage = null
+                // Clean input field to canonical URL if messy text was entered
+                if (!urlInput.startsWith("http") || urlInput.contains(" ") || urlInput.length == 11) {
+                    urlInput = details.canonicalUrl
+                }
                 if (customTitle.isBlank()) {
                     customTitle = details.title
                 }
@@ -124,10 +135,14 @@ fun YouTubeImportSection(
         }
     }
 
-    // Auto trigger when URL changes if it looks like a complete link
+    // Auto trigger when URL changes if it is a valid YouTube URL
     LaunchedEffect(urlInput) {
-        if (urlInput.contains("youtu") && YouTubeImportHelper.isValidYouTubeUrl(urlInput)) {
-            triggerResolve(urlInput)
+        val trimmed = urlInput.trim()
+        if (trimmed.isNotBlank() && YouTubeImportHelper.isValidYouTubeUrl(trimmed)) {
+            val currentId = YouTubeImportHelper.extractVideoId(trimmed)
+            if (resolvedDetails?.videoId != currentId && !isResolving) {
+                triggerResolve(trimmed)
+            }
         }
     }
 
@@ -173,7 +188,7 @@ fun YouTubeImportSection(
                             color = TextPrimary
                         )
                         Text(
-                            text = "Paste standard video, Shorts, or podcast link",
+                            text = "Paste standard video, Shorts, live stream, or youtu.be",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary
                         )
@@ -184,10 +199,11 @@ fun YouTubeImportSection(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
-                                val text = clipboardManager.getText()?.text
-                                if (!text.isNullOrBlank()) {
-                                    urlInput = text
-                                    triggerResolve(text)
+                                val rawText = clipboardManager.getText()?.text?.trim()
+                                if (!rawText.isNullOrBlank()) {
+                                    val cleaned = YouTubeImportHelper.cleanUrlOrExtract(rawText)
+                                    urlInput = cleaned
+                                    triggerResolve(cleaned)
                                 }
                             }
                             .testTag("paste_youtube_button"),
@@ -255,7 +271,40 @@ fun YouTubeImportSection(
                                     strokeWidth = 2.dp,
                                     color = YouTubeRed
                                 )
+                            } else if (resolvedDetails != null) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Verified",
+                                    tint = GreenSuccess,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .padding(end = 4.dp)
+                                )
+                                IconButton(onClick = {
+                                    urlInput = ""
+                                    resolvedDetails = null
+                                    errorMessage = null
+                                    customTitle = ""
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = "Clear",
+                                        tint = TextSecondary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             } else if (urlInput.isNotBlank()) {
+                                IconButton(
+                                    onClick = { triggerResolve(urlInput) },
+                                    modifier = Modifier.testTag("fetch_youtube_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = "Fetch Video Details",
+                                        tint = YouTubeRed,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                                 IconButton(onClick = {
                                     urlInput = ""
                                     resolvedDetails = null
@@ -273,6 +322,14 @@ fun YouTubeImportSection(
                         }
                     },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Go,
+                        keyboardType = KeyboardType.Uri
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onGo = { triggerResolve(urlInput) },
+                        onDone = { triggerResolve(urlInput) }
+                    ),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = YouTubeRed,
@@ -284,25 +341,47 @@ fun YouTubeImportSection(
                     )
                 )
 
-                // Error Message
+                // Error Message with retry action
                 errorMessage?.let { error ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Card(
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = RedError.copy(alpha = 0.12f)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, RedError.copy(alpha = 0.3f))
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ErrorOutline,
-                            contentDescription = null,
-                            tint = RedError,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = error,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = RedError
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = RedError,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = error,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = RedError,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (urlInput.isNotBlank()) {
+                                IconButton(
+                                    onClick = { triggerResolve(urlInput) },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Retry",
+                                        tint = RedError,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

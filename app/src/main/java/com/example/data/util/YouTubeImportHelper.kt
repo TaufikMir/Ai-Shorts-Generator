@@ -90,18 +90,16 @@ object YouTubeImportHelper {
     )
 
     private val YOUTUBE_PATTERNS = listOf(
-        // youtu.be/<id>
-        Regex("""(?:https?://)?(?:www\.|m\.)?youtu\.be/([a-zA-Z0-9_-]{11})(?:[?&].*)?"""),
-        // youtube.com/watch?v=<id> or youtube.com/watch?feature=...&v=<id>
-        Regex("""(?:https?://)?(?:www\.|m\.)?youtube\.com/watch\?(?:.*&)?v=([a-zA-Z0-9_-]{11})(?:&.*)?"""),
-        // youtube.com/shorts/<id>
-        Regex("""(?:https?://)?(?:www\.|m\.)?youtube\.com/shorts/([a-zA-Z0-9_-]{11})(?:[?&].*)?"""),
-        // youtube.com/embed/<id>
-        Regex("""(?:https?://)?(?:www\.|m\.)?youtube\.com/embed/([a-zA-Z0-9_-]{11})(?:[?&].*)?"""),
-        // youtube.com/v/<id>
-        Regex("""(?:https?://)?(?:www\.|m\.)?youtube\.com/v/([a-zA-Z0-9_-]{11})(?:[?&].*)?"""),
-        // standalone 11-char ID
-        Regex("""^([a-zA-Z0-9_-]{11})$""")
+        // youtu.be/<id> with optional query, hash, or trailing slash
+        Regex("""(?:https?://)?(?:[a-zA-Z0-9_-]+\.)?youtu\.be/([a-zA-Z0-9_-]{11})(?:[?#/].*)?"""),
+        // youtube.com/watch?v=<id> (handles all subdomains, params before/after, trailing slash, hashes)
+        Regex("""(?:https?://)?(?:[a-zA-Z0-9_-]+\.)?youtube\.com/watch/?\?(?:[^#\s]*&)?v=([a-zA-Z0-9_-]{11})(?:[&#/].*)?"""),
+        // youtube.com/(shorts|live|embed|v)/<id>
+        Regex("""(?:https?://)?(?:[a-zA-Z0-9_-]+\.)?youtube\.com/(?:shorts|live|embed|v)/([a-zA-Z0-9_-]{11})(?:[?#/].*)?"""),
+        // General query param v=<id> across any youtube URL
+        Regex("""[?&]v=([a-zA-Z0-9_-]{11})(?:[&#/\s]|$)"""),
+        // Standalone 11-character video ID with optional quotes or angle brackets
+        Regex("""^[<"'\(\[]?([a-zA-Z0-9_-]{11})[>"'\)\]]?$""")
     )
 
     /**
@@ -110,6 +108,10 @@ object YouTubeImportHelper {
      */
     fun extractVideoId(input: String): String? {
         val trimmed = input.trim()
+            .removePrefix("<").removeSuffix(">")
+            .removePrefix("\"").removeSuffix("\"")
+            .removePrefix("'").removeSuffix("'")
+            .trim()
         if (trimmed.isBlank()) return null
 
         for (regex in YOUTUBE_PATTERNS) {
@@ -132,15 +134,28 @@ object YouTubeImportHelper {
     }
 
     /**
+     * Converts any YouTube video ID to a standard canonical watch URL.
+     */
+    fun toCanonicalUrl(videoId: String): String = "https://www.youtube.com/watch?v=$videoId"
+
+    /**
+     * Cleans up raw user input or shared text into a canonical YouTube watch URL.
+     */
+    fun cleanUrlOrExtract(input: String): String {
+        val id = extractVideoId(input)
+        return if (id != null) toCanonicalUrl(id) else input.trim()
+    }
+
+    /**
      * Asynchronously resolves YouTube video metadata via public oEmbed API with graceful fallbacks.
      */
     suspend fun resolveVideoDetails(input: String): Result<YouTubeVideoDetails> = withContext(Dispatchers.IO) {
         val videoId = extractVideoId(input)
             ?: return@withContext Result.failure(
-                IllegalArgumentException("Invalid YouTube URL. Please provide a standard YouTube video, Shorts, or youtu.be link.")
+                IllegalArgumentException("Invalid YouTube URL. Please provide a standard YouTube video, Shorts, Live stream, or youtu.be link.")
             )
 
-        val canonicalUrl = "https://www.youtube.com/watch?v=$videoId"
+        val canonicalUrl = toCanonicalUrl(videoId)
         val thumbHq = "https://img.youtube.com/vi/$videoId/hqdefault.jpg"
         val thumbMax = "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
 
@@ -156,33 +171,39 @@ object YouTubeImportHelper {
                 .build()
 
             val response = httpClient.newCall(request).execute()
-            if (response.isSuccessful) {
-                val body = response.body?.string()
-                if (!body.isNullOrBlank()) {
-                    val json = JSONObject(body)
-                    val title = json.optString("title", preset?.title ?: "YouTube Video: $videoId")
-                    val author = json.optString("author_name", preset?.channel ?: "YouTube Creator")
-                    val duration = preset?.durationSeconds ?: 1500 // ~25 minutes default estimate
-                    val sizeMb = preset?.durationSeconds?.let { (it * 0.22f).coerceAtLeast(35f) } ?: 330.0f
+            response.use { resp ->
+                if (resp.isSuccessful) {
+                    val body = resp.body?.string()
+                    if (!body.isNullOrBlank()) {
+                        val json = JSONObject(body)
+                        val title = json.optString("title", preset?.title ?: "YouTube Video: $videoId").trim()
+                        val author = json.optString("author_name", preset?.channel ?: "YouTube Creator").trim()
+                        val duration = preset?.durationSeconds ?: 1500 // ~25 minutes default estimate
+                        val sizeMb = preset?.durationSeconds?.let { (it * 0.22f).coerceAtLeast(35f) } ?: 330.0f
 
-                    return@withContext Result.success(
-                        YouTubeVideoDetails(
-                            videoId = videoId,
-                            canonicalUrl = canonicalUrl,
-                            title = title,
-                            channelTitle = author,
-                            thumbnailUrl = thumbHq,
-                            maxResThumbnailUrl = thumbMax,
-                            durationSeconds = duration,
-                            estimatedSizeMb = sizeMb,
-                            category = preset?.category ?: "YOUTUBE IMPORT",
-                            description = preset?.description ?: "Direct video stream imported from YouTube for viral vertical shorts extraction."
+                        return@withContext Result.success(
+                            YouTubeVideoDetails(
+                                videoId = videoId,
+                                canonicalUrl = canonicalUrl,
+                                title = if (title.isNotBlank()) title else (preset?.title ?: "YouTube Video: $videoId"),
+                                channelTitle = if (author.isNotBlank()) author else (preset?.channel ?: "YouTube Creator"),
+                                thumbnailUrl = thumbHq,
+                                maxResThumbnailUrl = thumbMax,
+                                durationSeconds = duration,
+                                estimatedSizeMb = sizeMb,
+                                category = preset?.category ?: "YOUTUBE IMPORT",
+                                description = preset?.description ?: "Direct video stream imported from YouTube for viral vertical shorts extraction."
+                            )
                         )
+                    }
+                } else if (resp.code == 404) {
+                    return@withContext Result.failure(
+                        IllegalArgumentException("YouTube video was not found (HTTP 404). Please verify that the link or video ID exists and the video is public.")
                     )
                 }
             }
         } catch (_: Exception) {
-            // Network fallback below
+            // Network fallback below (offline testing or timeout)
         }
 
         // Offline / fallback resolution

@@ -98,11 +98,48 @@ class ExampleRobolectricTest {
     // Shorts URL
     assertEquals("Yf-P_Wk7OQk", helper.extractVideoId("https://www.youtube.com/shorts/Yf-P_Wk7OQk"))
 
+    // Shorts URL with trailing slash and query
+    assertEquals("Yf-P_Wk7OQk", helper.extractVideoId("https://www.youtube.com/shorts/Yf-P_Wk7OQk/?feature=share"))
+
+    // YouTube Live stream URL
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("https://www.youtube.com/live/jvqFAi7vkBc"))
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("https://youtube.com/live/jvqFAi7vkBc?feature=share"))
+
+    // Music YouTube URL
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("https://music.youtube.com/watch?v=jvqFAi7vkBc"))
+
+    // Watch URL with hash fragment
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("https://www.youtube.com/watch?v=jvqFAi7vkBc#t=100"))
+
+    // Watch URL with trailing slash before query
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("https://www.youtube.com/watch/?v=jvqFAi7vkBc"))
+
     // Embed URL
     assertEquals("QmOF0crdyRU", helper.extractVideoId("https://www.youtube.com/embed/QmOF0crdyRU"))
 
     // Raw 11-char ID
     assertEquals("jvqFAi7vkBc", helper.extractVideoId("jvqFAi7vkBc"))
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("\"jvqFAi7vkBc\""))
+
+    // Shared text from mobile YouTube app
+    assertEquals("jvqFAi7vkBc", helper.extractVideoId("Watch 'Lex Fridman Podcast' on YouTube: https://youtu.be/jvqFAi7vkBc"))
+  }
+
+  @Test
+  fun `cleanUrlOrExtract produces valid canonical URL`() {
+    val helper = com.example.data.util.YouTubeImportHelper
+    assertEquals(
+      "https://www.youtube.com/watch?v=jvqFAi7vkBc",
+      helper.cleanUrlOrExtract("https://youtu.be/jvqFAi7vkBc?si=123")
+    )
+    assertEquals(
+      "https://www.youtube.com/watch?v=jvqFAi7vkBc",
+      helper.cleanUrlOrExtract("jvqFAi7vkBc")
+    )
+    assertEquals(
+      "https://www.youtube.com/watch?v=jvqFAi7vkBc",
+      helper.cleanUrlOrExtract("Check this out: https://www.youtube.com/shorts/jvqFAi7vkBc")
+    )
   }
 
   @Test

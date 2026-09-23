@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Shorts Factory - Turn Long Videos into Viral 9:16 Shorts</title>
+  <meta name="description" content="AI Shorts Factory turns podcasts, keynotes, and YouTube videos into viral vertical Shorts, Reels, and TikToks with AI clip detection, auto-captions, and speaker framing.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0A0D14;
+      --bg-card: #121826;
+      --bg-card-elevated: #1B2234;
+      --border-dark: #232C42;
+      --border-glow: rgba(56, 189, 248, 0.3);
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --accent-red: #EF4444;
+      --accent-cyan: #38BDF8;
+      --accent-green: #10B981;
+      --accent-purple: #8B5CF6;
+      --accent-amber: #F59E0B;
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(239, 68, 68, 0.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(56, 189, 248, 0.08), transparent);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header Navigation */
+    header {
+      border-bottom: 1px solid var(--border-dark);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 13, 20, 0.85);
+    }
+
+    .nav-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent-red), #B91C1C);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-red), #DC2626);
+      color: white;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-dark);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-cyan);
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge-wrapper {
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #CBD5E1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero h1 span.gradient {
+      background: linear-gradient(90deg, #EF4444, #F43F5E, #FB7185);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: clamp(1.1rem, 2vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 760px;
+      margin: 0 auto 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Interactive Showcase Section */
+    .showcase-section {
+      padding: 40px 0 80px;
+    }
+
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .showcase-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Studio Controls Panel */
+    .controls-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .controls-title h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-input {
+      flex: 1;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-dark);
+      color: var(--text-primary);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-red);
+    }
+
+    .presets-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .preset-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-dark);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .preset-chip:hover, .preset-chip.active {
+      border-color: var(--accent-red);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    .preset-info {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .preset-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Option Pill Groups */
+    .pill-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .option-btn {
+      padding: 10px 12px;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-dark);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .option-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Smartphone 9:16 Mockup */
+    .mockup-container {
+      display: flex;
+      justify-content: center;
+    }
+
+    .phone-frame {
+      width: 330px;
+      height: 660px;
+      background: #000;
+      border-radius: 44px;
+      border: 6px solid #232C42;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.2);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 20px;
+      background: #232C42;
+      border-radius: 20px;
+      z-index: 50;
+    }
+
+    .phone-screen {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(180deg, #1E1B4B 0%, #0F172A 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 18px 24px;
+      overflow: hidden;
+    }
+
+    .speaker-avatar-crop {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #38BDF8 0%, #1E3A8A 70%);
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 40px rgba(56, 189, 248, 0.35);
+      transition: all 0.5s ease;
+    }
+
+    .phone-overlay-top {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .virality-chip {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .captions-box {
+      position: relative;
+      z-index: 20;
+      margin: auto 0 40px;
+      text-align: center;
+      padding: 0 8px;
+    }
+
+    .caption-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      line-height: 1.3;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+      transition: all 0.3s;
+    }
+
+    .caption-hormozi {
+      color: #FFF;
+      text-transform: uppercase;
+      font-family: var(--font-main);
+    }
+    .caption-hormozi span.highlight {
+      background: #FACC15;
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .caption-mrbeast {
+      color: #38BDF8;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .caption-clean {
+      font-family: var(--font-main);
+      font-weight: 600;
+      color: #F8FAFC;
+    }
+
+    /* Soundwave visualizer */
+    .soundwave {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      height: 32px;
+      margin-bottom: 12px;
+    }
+
+    .soundwave-bar {
+      width: 3px;
+      height: 10px;
+      background: var(--accent-cyan);
+      border-radius: 99px;
+      animation: wave 1.2s infinite ease-in-out;
+    }
+
+    .soundwave-bar:nth-child(2) { animation-delay: 0.1s; }
+    .soundwave-bar:nth-child(3) { animation-delay: 0.2s; }
+    .soundwave-bar:nth-child(4) { animation-delay: 0.3s; }
+    .soundwave-bar:nth-child(5) { animation-delay: 0.4s; }
+    .soundwave-bar:nth-child(6) { animation-delay: 0.5s; }
+    .soundwave-bar:nth-child(7) { animation-delay: 0.6s; }
+
+    @keyframes wave {
+      0%, 100% { height: 6px; }
+      50% { height: 26px; }
+    }
+
+    .phone-footer {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .short-title-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #E2E8F0;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 12px;
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Copy Kit & Publishing Panel */
+    .copy-kit-card {
+      margin-top: 24px;
+      background: var(--bg-card-elevated);
+      border: 1px solid var(--border-dark);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .copy-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .copy-code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      background: rgba(0, 0, 0, 0.4);
+      padding: 6px 10px;
+      border-radius: 6px;
+      overflow-x: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    .btn-copy {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      background: var(--border-dark);
+      color: var(--text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      font-weight: 600;
+    }
+
+    .btn-copy:hover {
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    /* Pipeline Architecture Grid */
+    .features-section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border-dark);
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .section-header h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-dark);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 1.25rem;
+    }
+
+    .feature-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* GitHub & Vercel Deployment Instructions */
+    .deploy-section {
+      padding: 60px 0 100px;
+      border-top: 1px solid var(--border-dark);
+    }
+
+    .code-box {
+      background: #000;
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: #38BDF8;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border-dark);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-wrapper">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        </div>
+        AI Shorts Factory
+      </a>
+      <div class="nav-links">
+        <span class="badge-pill">Android 15 • Kotlin</span>
+        <a href="#demo" class="btn btn-outline">Interactive Demo</a>
+        <a href="#deploy" class="btn btn-primary">Deploy & Build</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge-wrapper">
+        <span class="badge-pill">🚀 10-Stage Neural Processing Pipeline</span>
+      </div>
+      <h1>Turn Long YouTube Videos Into<br><span class="gradient">Viral Vertical Shorts</span> in Minutes</h1>
+      <p>Autonomous AI video repurposing engine built with Kotlin & Jetpack Compose. Automatic speech diarization, viral hook extraction, intelligent speaker framing, and customizable kinetic subtitles.</p>
+      
+      <div class="hero-actions">
+        <a href="#demo" class="btn btn-primary" style="padding: 14px 28px; font-size: 1rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Try Live Simulator
+        </a>
+        <a href="#deploy" class="btn btn-outline" style="padding: 14px 28px; font-size: 1rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+          GitHub & CI/CD Setup
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Demo Section -->
+  <section class="showcase-section" id="demo">
+    <div class="container">
+      <div class="showcase-grid">
+
+        <!-- Controls Side -->
+        <div class="card">
+          <div class="controls-title">
+            <h3>Shorts Studio Controller</h3>
+            <span class="badge-pill" id="status-badge" style="color: var(--accent-green); border-color: var(--accent-green);">Ready</span>
+          </div>
+
+          <!-- YouTube Link Importer -->
+          <div class="input-group">
+            <label class="input-label">YouTube URL or Video ID</label>
+            <div class="search-row">
+              <input type="text" id="yt-input" class="search-input" value="https://www.youtube.com/watch?v=jvqFAi7vkBc" placeholder="Paste YouTube link...">
+              <button class="btn btn-primary" id="btn-fetch">Fetch</button>
+            </div>
+            
+            <div class="presets-container">
+              <div class="preset-chip active" data-id="jvqFAi7vkBc" data-title="Sam Altman on GPT-5 & Superintelligence" data-channel="Lex Fridman" data-hook="The compute scale required for GPT-5 will reshape society.">
+                <div>
+                  <div class="preset-info">Sam Altman & Lex Fridman</div>
+                  <div class="preset-sub">AI & Tech Podcast • 2h 00m</div>
+                </div>
+                <span class="badge-pill" style="font-size: 0.65rem;">Viral 98%</span>
+              </div>
+              <div class="preset-chip" data-id="Yf-P_Wk7OQk" data-title="Apple Vision Pro 1 Year Review" data-channel="MKBHD" data-hook="Is spatial computing actually the future or did Apple miss?">
+                <div>
+                  <div class="preset-info">MKBHD Vision Pro Reality</div>
+                  <div class="preset-sub">Hardware Review • 16m 00m</div>
+                </div>
+                <span class="badge-pill" style="font-size: 0.65rem;">Viral 94%</span>
+              </div>
+              <div class="preset-chip" data-id="6rZ1Hn36z04" data-title="How to Scale Any Business Fast" data-channel="Alex Hormozi" data-hook="Most people quit right when leverage starts compounding.">
+                <div>
+                  <div class="preset-info">Alex Hormozi Scale Blueprint</div>
+                  <div class="preset-sub">Business / Strategy • 35m 00m</div>
+                </div>
+                <span class="badge-pill" style="font-size: 0.65rem;">Viral 96%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Framing Strategy Selector -->
+          <div class="input-group">
+            <label class="input-label">Vertical Framing Strategy</label>
+            <div class="pill-group">
+              <button class="option-btn active" data-framing="center">Center Speaker</button>
+              <button class="option-btn" data-framing="face">Smart Face Track</button>
+              <button class="option-btn" data-framing="blur">Blurred 16:9 BG</button>
+              <button class="option-btn" data-framing="split">Split Screen</button>
+            </div>
+          </div>
+
+          <!-- Caption Animation Style -->
+          <div class="input-group">
+            <label class="input-label">Kinetic Subtitle Typography</label>
+            <div class="pill-group">
+              <button class="option-btn active" data-style="hormozi">Hormozi Pop</button>
+              <button class="option-btn" data-style="mrbeast">MrBeast Impact</button>
+              <button class="option-btn" data-style="clean">Minimal Clean</button>
+              <button class="option-btn" data-style="neon">Neon Glow</button>
+            </div>
+          </div>
+
+          <!-- Copy Kit Quick Actions -->
+          <div class="copy-kit-card">
+            <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: var(--text-primary);">Publishing Content Kit</div>
+            <div class="copy-row">
+              <span class="copy-code" id="kit-title">Why GPT-5 Changes Everything</span>
+              <button class="btn-copy" onclick="copyContent('kit-title')">Copy Title</button>
+            </div>
+            <div class="copy-row">
+              <span class="copy-code" id="kit-tags">#shorts #ai #technology #openai #future</span>
+              <button class="btn-copy" onclick="copyContent('kit-tags')">Copy Tags</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone 9:16 Preview Side -->
+        <div class="mockup-container">
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            
+            <div class="phone-screen" id="phone-screen">
+              <div class="phone-overlay-top">
+                <span class="virality-chip">🔥 98% Virality</span>
+                <span style="font-size: 0.75rem; color: #94A3B8; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 6px;">1080x1920</span>
+              </div>
+
+              <!-- Animated Video Avatar Crop -->
+              <div class="speaker-avatar-crop" id="avatar-crop">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="white" opacity="0.9">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+
+              <!-- Dynamic Subtitles Box -->
+              <div class="captions-box">
+                <div class="soundwave">
+                  <div class="soundwave-bar"></div>
+                  <div class="soundwave-bar"></div>
+                  <div class="soundwave-bar"></div>
+                  <div class="soundwave-bar"></div>
+                  <div class="soundwave-bar"></div>
+                  <div class="soundwave-bar"></div>
+                  <div class="soundwave-bar"></div>
+                </div>
+                <div class="caption-text caption-hormozi" id="caption-display">
+                  "THE COMPUTE SCALE <span class="highlight">CHANGES</span> EVERYTHING"
+                </div>
+              </div>
+
+              <!-- Phone Overlay Bottom -->
+              <div class="phone-footer">
+                <div class="short-title-badge" id="phone-badge-title">Sam Altman & Lex Fridman</div>
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-red); display: flex; align-items: center; justify-content: center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Architectural Features Section -->
+  <section class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-pill">Production Architecture</span>
+        <h2>Engineering Highlights</h2>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">Built exclusively for Android with modern enterprise-grade Kotlin design patterns.</p>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--accent-red);">⚡</div>
+          <h4 class="feature-title">YouTube Link Importer</h4>
+          <p class="feature-desc">Handles standard watch links, youtu.be, Shorts, YouTube Live streams, timestamp anchors, and shared clipboard text with automatic oEmbed metadata resolution.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan);">🎙️</div>
+          <h4 class="feature-title">Speech Diarization Worker</h4>
+          <p class="feature-desc">Asynchronous Coroutines worker performing word-level forced timestamp alignment, voice activity detection, and multi-speaker separation.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-green);">💾</div>
+          <h4 class="feature-title">Room Local Database</h4>
+          <p class="feature-desc">Zero cloud dependency for storage. Projects, transcripts, rendered clips, and user account credit transactions persist locally via SQLite Room DAOs.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(139, 92, 246, 0.15); color: var(--accent-purple);">🎬</div>
+          <h4 class="feature-title">Export Screen & Publishing</h4>
+          <p class="feature-desc">Direct 1080x1920 MP4 download workflow with instant copy actions for viral hook titles, keyword descriptions, and SEO hashtags.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub and Vercel Deployment Section -->
+  <section class="deploy-section" id="deploy">
+    <div class="container">
+      <div class="section-header">
+        <span class="badge-pill">GitHub & Vercel Ready</span>
+        <h2>Deployment & Building</h2>
+        <p style="color: var(--text-secondary);">One repository compatible with both GitHub CI/CD and Vercel web hosting.</p>
+      </div>
+
+      <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));">
+        
+        <!-- GitHub CI/CD -->
+        <div class="card">
+          <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+            GitHub Repository & Actions
+          </h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary);">Push directly to GitHub. The included workflow automatically compiles the project, runs Robolectric unit tests, and uploads the debug APK.</p>
+          <div class="code-box">
+git add .
+git commit -m "Initialize AI Shorts Factory"
+git push origin main
+# Workflow automatically runs in .github/workflows/android-ci.yml
+          </div>
+        </div>
+
+        <!-- Vercel Deployment -->
+        <div class="card">
+          <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 1L24 22H0L12 1Z"/></svg>
+            Deploy Showcase on Vercel
+          </h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary);">Connect this repository directly to Vercel. With root <code>vercel.json</code> and <code>package.json</code>, it deploys this interactive web demo instantly with zero configuration.</p>
+          <div class="code-box">
+npx vercel
+# or push to GitHub and import repository in vercel.com
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>AI Shorts Factory • Built with Kotlin, Jetpack Compose, Material 3, and Room DB</p>
+    </div>
+  </footer>
+
+  <script>
+    // Presets interactivity
+    const presets = document.querySelectorAll('.preset-chip');
+    const captionDisplay = document.getElementById('caption-display');
+    const badgeTitle = document.getElementById('phone-badge-title');
+    const kitTitle = document.getElementById('kit-title');
+    const ytInput = document.getElementById('yt-input');
+
+    presets.forEach(p => {
+      p.addEventListener('click', () => {
+        presets.forEach(c => c.classList.remove('active'));
+        p.classList.add('active');
+        const id = p.getAttribute('data-id');
+        const title = p.getAttribute('data-title');
+        const hook = p.getAttribute('data-hook');
+
+        ytInput.value = `https://www.youtube.com/watch?v=${id}`;
+        badgeTitle.innerText = p.querySelector('.preset-info').innerText;
+        kitTitle.innerText = title;
+        captionDisplay.innerHTML = `"${hook.toUpperCase()}"`;
+      });
+    });
+
+    // Caption styles
+    const styleButtons = document.querySelectorAll('[data-style]');
+    styleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        styleButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const style = btn.getAttribute('data-style');
+
+        captionDisplay.className = 'caption-text';
+        if (style === 'hormozi') {
+          captionDisplay.classList.add('caption-hormozi');
+        } else if (style === 'mrbeast') {
+          captionDisplay.classList.add('caption-mrbeast');
+        } else if (style === 'clean') {
+          captionDisplay.classList.add('caption-clean');
+        } else {
+          captionDisplay.style.color = '#F43F5E';
+          captionDisplay.style.textShadow = '0 0 16px rgba(244, 63, 94, 0.8)';
+        }
+      });
+    });
+
+    // Framing buttons
+    const framingButtons = document.querySelectorAll('[data-framing]');
+    const avatarCrop = document.getElementById('avatar-crop');
+    framingButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        framingButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const mode = btn.getAttribute('data-framing');
+
+        if (mode === 'center') {
+          avatarCrop.style.borderRadius = '50%';
+          avatarCrop.style.width = '220px';
+          avatarCrop.style.height = '220px';
+        } else if (mode === 'face') {
+          avatarCrop.style.borderRadius = '30px';
+          avatarCrop.style.width = '250px';
+          avatarCrop.style.height = '250px';
+        } else if (mode === 'blur') {
+          avatarCrop.style.borderRadius = '16px';
+          avatarCrop.style.width = '280px';
+          avatarCrop.style.height = '160px';
+        } else {
+          avatarCrop.style.borderRadius = '0';
+          avatarCrop.style.width = '100%';
+          avatarCrop.style.height = '180px';
+        }
+      });
+    });
+
+    // Copy helper
+    function copyContent(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard: ' + text);
+      });
+    }
+
+    document.getElementById('btn-fetch').addEventListener('click', () => {
+      const url = ytInput.value;
+      if (url.includes('youtube') || url.includes('youtu.be')) {
+        captionDisplay.innerHTML = '"ANALYZING AUDIO STREAM & EXTRACTING VIRAL CLIPS..."';
+        setTimeout(() => {
+          captionDisplay.innerHTML = '"FOUND 5 HIGH-ENGAGEMENT HOOKS WITH 95%+ VIRALITY SCORE"';
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>
